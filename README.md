@@ -17,7 +17,7 @@ First, login to your Azure subscription with:
 
 ```
 az login
-``
+```
 
 Then create your resource group (if you are not using an existing one):
 
