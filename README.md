@@ -49,13 +49,15 @@ Close the PowerShell window and open a new one (it doesn't need to be Admin at t
 ```
 git clone https://github.com/nellshamrell/reproducible_build_basic_exp_library.git
 cd .\reproducible_build_basic_exp_library\
-rustc .\src\lib.rs --crate-type rlib
+cargo build
+cargo build --release --locked --target=x86_64-pc-windows-msvc
 ```
 
 Then get the SHA256 hash value of the rlib you just produced using:
 
 ```
-Get-FileHash -Path .\liblib.rlib
+Get-FileHash -Path target\x86_64
+-pc-windows-msvc\release\libreproducible_exp_lib.rlib
 ```
 
 Save this value somewhere.
@@ -67,12 +69,32 @@ To create your second VM, follow the exact same procedure you just did for your 
 When you get the SHA256 value of the rlib you produce on this machine with:
 
 ```
-Get-FileHash -Path .\liblib.rlib
+Get-FileHash -Path target\x86_64-pc-windows-msvc\release\libreproducible_exp_lib.rlib
 ```
 
 It should be the exact same value as the one created on your first VM.
 
+## Trying a more complex example
+
+Let's try a more complex example, compiling the windows library of the [windows-rs](https://github.com/microsoft/windows-rs.git)
+
+On each VM, run these commands in a PowerShell window to clone and compile the windows library.
+
+```
+git clone https://github.com/microsoft/windows-rs.git
+cd .\windows-rs\crates\libs\windows
+cargo build
+cargo build --release --locked --target=x86_64-pc-windows-msvc
+```
+
+Then get the hash of the produced binary
+
+```
+Get-FileHash -Path ..\..\..\target\x86_64-pc-windows-msvc\release\libwindows.rlib
+```
+
+It should be the same on both VMs.
+
 ### Clean Up
 
 Remember to clean up your cloud infrastructure when you are done!
-
