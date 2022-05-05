@@ -4,11 +4,15 @@ This is a proof of concept for a reproducible Rust build of a _library_ on Windo
 
 Reproducible Rust builds of _binaries_ on Windows do not currently work, as documented in [this GitHub issue](https://github.com/rust-lang/rust/issues/88982).
 
-## Using
+## What's a reproducible build?
+
+[This article provides an excellent introduction to reproducible/deterministic builds](https://blog.conan.io/2019/09/02/Deterministic-builds-with-C-C++.html).
+
+## Basic Example
 
 There are a few different ways you can use this proof of concept. I chose to use identical VMs in Azure (created using the Azure CLI).
 
-To do it this way, you will need:
+To do it this way, you will need the following on your local workstation:
 * An Azure Subscription
 * The Azure CLI (I use it in PowerShell)
 * Windows Remote Desk Protocol
@@ -49,6 +53,7 @@ Close the PowerShell window and open a new one (it doesn't need to be Admin at t
 ```
 git clone https://github.com/nellshamrell/reproducible_build_basic_exp_library.git
 cd .\reproducible_build_basic_exp_library\
+$env:RUSTFLAGS='<DIRECTORY YOU ARE RUNNING THE BUILD FROM>=app'
 cargo build
 cargo build --release --locked --target=x86_64-pc-windows-msvc
 ```
@@ -56,8 +61,7 @@ cargo build --release --locked --target=x86_64-pc-windows-msvc
 Then get the SHA256 hash value of the rlib you just produced using:
 
 ```
-Get-FileHash -Path target\x86_64
--pc-windows-msvc\release\libreproducible_exp_lib.rlib
+Get-FileHash -Path target\x86_64-pc-windows-msvc\release\libreproducible_exp_lib.rlib
 ```
 
 Save this value somewhere.
@@ -74,7 +78,7 @@ Get-FileHash -Path target\x86_64-pc-windows-msvc\release\libreproducible_exp_lib
 
 It should be the exact same value as the one created on your first VM.
 
-## Trying a more complex example
+## More Complex example
 
 Let's try a more complex example, compiling the windows library of the [windows-rs](https://github.com/microsoft/windows-rs.git)
 
@@ -83,17 +87,66 @@ On each VM, run these commands in a PowerShell window to clone and compile the w
 ```
 git clone https://github.com/microsoft/windows-rs.git
 cd .\windows-rs\crates\libs\windows
+$env:RUSTFLAGS='<DIRECTORY YOU ARE RUNNING THE BUILD FROM>=app'
 cargo build
 cargo build --release --locked --target=x86_64-pc-windows-msvc
 ```
 
-Then get the hash of the produced binary
+Then get the hash of the produced rlib.
 
 ```
 Get-FileHash -Path ..\..\..\target\x86_64-pc-windows-msvc\release\libwindows.rlib
 ```
 
-It should be the same on both VMs.
+Now try this on your other VM - it should produce the same hash.
+
+## Running the build from different directories
+
+One of the core concepts of reproducible (ask deterministic builds) is that the same artifact should be produced regardless of what directory the build is run from.
+
+This is why we set the environmental variable RUSTFLAGS in the previous examples.
+
+```
+$env:RUSTFLAGS='<DIRECTORY YOU ARE RUNNING THE BUILD FROM>=app'
+```
+
+Let's try running a build of the windows library in a different directory on either of your VMs.
+
+Back in your PowerShell window, head back to your home directory:
+
+```
+cd ~
+```
+
+And now let's create a different directory.
+
+```
+mkdir foo/bar
+```
+
+And go into that directory
+
+```
+cd foo/bar
+```
+
+Now clone the windows-rs crate into the directory again and follow the same build steps:
+
+```
+git clone https://github.com/microsoft/windows-rs.git
+cd .\windows-rs\crates\libs\windows
+$env:RUSTFLAGS='<DIRECTORY YOU ARE RUNNING THE BUILD FROM>=app'
+cargo build
+cargo build --release --locked --target=x86_64-pc-windows-msvc
+```
+
+Then get the hash of the produced rlib with:
+
+```
+Get-FileHash -Path ..\..\..\target\x86_64-pc-windows-msvc\release\libwindows.rlib
+```
+
+It should match the hash you produced for the windows library previously.
 
 ### Clean Up
 
