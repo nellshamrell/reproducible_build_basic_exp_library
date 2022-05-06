@@ -8,14 +8,63 @@ Reproducible Rust builds of _binaries_ on Windows do not currently work, as docu
 
 [This article provides an excellent introduction to reproducible/deterministic builds](https://blog.conan.io/2019/09/02/Deterministic-builds-with-C-C++.html).
 
-## Basic Example
+## Docker Containers
 
-There are a few different ways you can use this proof of concept. I chose to use identical VMs in Azure (created using the Azure CLI).
+This repo includes a Dockerfile that you can use to run your builds in. There is also an already built container image from this file on [Docker Hub](https://hub.docker.com/repository/docker/nellshamrell/windows_rust_exp).
 
-To do it this way, you will need the following on your local workstation:
+You will need Docker installed on your local workstation (which must be running Windows) and set up to run Windows containers (this can be configured using Docker Desktop).
+
+First, clone this repo to your local workstation
+
+```
+git clone https://github.com/nellshamrell/reproducible_build_basic_exp_library.git
+cd reproducible_build_basic_exp_library
+```
+
+**Using the Docker Hub image**
+
+```
+docker pull nellshamrell/windows_rust_exp:0.0.1
+```
+
+**Building the image yourself**
+
+(This will take 10-15 min)
+
+```
+docker build .
+```
+
+Then, get the Docker Image ID with:
+
+```
+docker image ls
+```
+
+Now, use Docker run to start the container and run the build:
+
+```
+docker run --rm -v ${PWD}:C:\app -w /app e59c99999885 rustc --remap-path-prefix=\app=app src\lib.rs --crate-type=rlib --target=x86_64-pc-windows-msvc
+```
+
+After this runs, you should see a file called liblib.rlib in the directory you are working in.
+
+Now, get the hash of this file with: 
+
+```
+Get-FileHash -Path .\liblib.rlib
+```
+
+This hash value should remain the same, even if you were to clone the repo and run the build from another directory (or another workstation).
+
+## Cloud Workstations
+
+For Cloud workstations, I chose to use two Windows 11 workstations in Azure.
+
+To do it this way, you will need the following:
 * An Azure Subscription
-* The Azure CLI (I use it in PowerShell)
-* Windows Remote Desk Protocol
+* The Azure CLI (I use it in PowerShell) on your local workstation
+* Windows Remote Desk Protocol on your local workstation
 
 First, login to your Azure subscription with:
 
