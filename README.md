@@ -44,7 +44,7 @@ docker image ls
 Now, use Docker run to start the container and run the build:
 
 ```
-docker run --rm -v ${PWD}:C:\app -w /app e59c99999885 rustc --remap-path-prefix=\app=app src\lib.rs --crate-type=rlib --target=x86_64-pc-windows-msvc
+docker run --rm -v ${PWD}:C:\app -w /app <DOCKER IMAGE ID> rustc --remap-path-prefix=\app=app src\lib.rs --crate-type=rlib --target=x86_64-pc-windows-msvc
 ```
 
 After this runs, you should see a file called liblib.rlib in the directory you are working in.
